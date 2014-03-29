@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+	<IQFeedProductId></IQFeedProductId>>
+	<IQFeedLogin></IQFeedLogin>
+	<IQFeedPassword></IQFeedPassword>
+    <!-- IQFeed lookup port number -->
+    <IQFeedPortNumber>9100</IQFeedPortNumber>
+    <!-- IQFeed Admin port number -->
+    <IQFeedAdminPortNumber>9300</IQFeedAdminPortNumber>
+    <!-- Insert single space between symbols -->
+    <Symbols>AAPL MSFT GOOG</Symbols>
+</Configuration>
