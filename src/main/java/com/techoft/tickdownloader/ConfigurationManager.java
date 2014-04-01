@@ -11,8 +11,8 @@ import javax.xml.xpath.XPathFactory;
 import java.io.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -25,7 +25,7 @@ public class ConfigurationManager {
 
     // symbol registry
     private static final String symbolRegistryFileName = "symbolRegistry.csv";
-    private static Map<String, LocalDate> symbolRegistry = new HashMap<String, LocalDate>();
+    private static Map<String, LocalDate> symbolRegistry = new TreeMap<String, LocalDate>();
     private Lock symbolRegistryLock = new ReentrantLock();
 
     //Log4J
@@ -48,16 +48,22 @@ public class ConfigurationManager {
 
         try {
             // read symbol registry file
-            BufferedReader reader = new BufferedReader(new FileReader(new File(symbolRegistryFileName)));
-            while ((inputLine = reader.readLine()) != null) {
-                if (inputLine.isEmpty()) {
-                    continue;
-                }
-                String[] data = inputLine.split(";");
-                symbolRegistry.put(data[0], LocalDate.parse(data[1]));
-            }
+            File symbolRegistryFile = new File(symbolRegistryFileName);
 
-            reader.close();
+            // create registry file, if not exists
+            if(!symbolRegistryFile.exists()){
+                symbolRegistryFile.createNewFile();
+            }else {
+                BufferedReader reader = new BufferedReader(new FileReader(symbolRegistryFile));
+                while ((inputLine = reader.readLine()) != null) {
+                    if (inputLine.isEmpty()) {
+                        continue;
+                    }
+                    String[] data = inputLine.split(";");
+                    symbolRegistry.put(data[0], LocalDate.parse(data[1]));
+                }
+                reader.close();
+            }
 
             ////////// read config.xml using XPath ////////////////
             DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
@@ -110,6 +116,7 @@ public class ConfigurationManager {
     public void SaveSymbolRegistry(){
         try {
             //all symbols downloaded, update symbolRegistry
+            //sort the list first
             BufferedWriter symbHistoryWriter = new BufferedWriter(new FileWriter(new File(symbolRegistryFileName)));
             for (Map.Entry<String, LocalDate> entry : symbolRegistry.entrySet()) {
                 symbHistoryWriter.write(String.format("%1$s;%2$s%n", entry.getKey(), entry.getValue().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))));

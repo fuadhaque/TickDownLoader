@@ -3,48 +3,80 @@ package com.techoft.tickdownloader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
 
 /**
  * Created by Fuad(fuadhaque@gmail.com) on 27.03.2014.
  */
 public class DownLoadTask implements Runnable {
     private static final Logger logger = LogManager.getLogger(DownLoadTask.class.getName());
+    private Map<String, LocalDate> symbolsRegistry = ConfigurationManager.getSymbolsRegistry();
     private DateTimeFormatter dtfm = DateTimeFormatter.ofPattern("yyyyMMdd HHmmss");
     private String symbol;
-    private LocalDate downloadDate;
+
+    private LocalDate yesterday = LocalDate.now().minusDays(1);
     private LocalDateTime beginDateTime;
     private LocalDateTime endDateTime;
 
-    public DownLoadTask(String symbol, LocalDate downloadDate){
+    private Socket iqfSocket;
+    private BufferedWriter tickWriter;
+    private BufferedReader sin;
+    private BufferedWriter sout;
+
+    public DownLoadTask(String symbol){
         this.symbol = symbol;
-        this.downloadDate = downloadDate;
-        this.beginDateTime = downloadDate.atTime(0, 0 , 0);
-        this.endDateTime = downloadDate.atTime(23, 59, 59);
     }
 
     public void run(){
+        //set last download default value to minus 10 days
+        LocalDate lastDownloadDate = LocalDate.now().minusDays(10);
+
+        //get last successful download date
+        if(symbolsRegistry.containsKey(symbol)){
+            lastDownloadDate = symbolsRegistry.get(symbol);
+        }
+
         try {
+            while (lastDownloadDate.compareTo(yesterday) < 0) {
+                lastDownloadDate = lastDownloadDate.plusDays(1);
+                DayOfWeek dayOfWeek = lastDownloadDate.getDayOfWeek();
+                if (dayOfWeek != DayOfWeek.SATURDAY && dayOfWeek != DayOfWeek.SUNDAY) {
+                    // may throw exception
+                    downloadTicks(lastDownloadDate);
+
+                    // this would not execute in case of an exception
+                    ConfigurationManager.getInstance().UpdateSymbolRegistry(symbol, lastDownloadDate);
+                }
+            }
+        }catch(Exception e){
+            logger.error(e);
+        }
+    }
+
+    private void downloadTicks(LocalDate downloadDate) throws Exception{
+        beginDateTime = downloadDate.atTime(0, 0, 0);
+        endDateTime = downloadDate.atTime(23, 59, 59);
+
+        try{
             // creates a socket connection to localhost (IP address 127.0.0.1) on port 9100.
             // This is that port that IQFeed listens on for lookup requests.
-            Socket iqfSocket = new Socket(InetAddress.getByName("localhost"), ConfigurationManager.getIQFLookUpPortNumber());
+            iqfSocket = new Socket(InetAddress.getByName("localhost"), ConfigurationManager.getIQFLookUpPortNumber());
 
             // buffer to incomming data.
-            BufferedReader sin = new BufferedReader(new InputStreamReader(iqfSocket.getInputStream()));
+            sin = new BufferedReader(new InputStreamReader(iqfSocket.getInputStream()));
 
             // buffer for out going commands.
-            BufferedWriter sout = new BufferedWriter(new OutputStreamWriter(iqfSocket.getOutputStream()));
+            sout = new BufferedWriter(new OutputStreamWriter(iqfSocket.getOutputStream()));
 
             // Set the lookup port to protocol 5.0 to allow for millisecond times,
             // market center, trade conditions, etc
@@ -60,7 +92,7 @@ public class DownLoadTask implements Runnable {
                 Files.createDirectories(pathToFile.getParent());
                 Files.createFile(pathToFile);
             }
-            BufferedWriter tickWriter = Files.newBufferedWriter(pathToFile);
+            tickWriter = Files.newBufferedWriter(pathToFile);
             String iqFeedRequest = String.format("HTT,%1$s,%2$s,%3$s,,,,1,,%n", symbol, beginDateTime.format(dtfm), endDateTime.format(dtfm));
             logger.info(iqFeedRequest);
 
@@ -78,16 +110,15 @@ public class DownLoadTask implements Runnable {
                     tickWriter.write(String.format("%s%n", sLine));
                 }
             }
-
-            tickWriter.flush();
-            tickWriter.close();
-
-            iqfSocket.close();
-
-            ConfigurationManager.getInstance().UpdateSymbolRegistry(symbol, downloadDate);
-
         }catch(Exception e){
-            logger.error(e);
+            throw e;
+        }finally{
+            try {
+                tickWriter.close();
+                iqfSocket.close();
+            } catch (IOException e) {
+                throw e;
+            }
         }
     }
 }

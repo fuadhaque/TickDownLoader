@@ -10,9 +10,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -23,16 +20,13 @@ import java.util.concurrent.TimeUnit;
 public class TickDownLoader {
     private int numberOfThreads;
     private String[] symbols = ConfigurationManager.getSymbols();
-    private Map<String, LocalDate> symbolsRegistry = ConfigurationManager.getSymbolsRegistry();
 
-    //Log4J
+    //Log4j ver 2
     private static final Logger logger = LogManager.getLogger(TickDownLoader.class.getName());
 
     public TickDownLoader(){
-
         //number of threads = number of processors + 1
         numberOfThreads = Runtime.getRuntime().availableProcessors() + 1;
-
         launchIQFeed();
     }
 
@@ -85,39 +79,17 @@ public class TickDownLoader {
         }
 
         try{
-            LocalDate today = LocalDate.now();
-            LocalDate prevDay = today.minusDays(1);
-
             ExecutorService executor = Executors.newFixedThreadPool(numberOfThreads);
 
             for(String symbol : symbols ){
-                LocalDate lastDownloadDate;
-
-                //get last successful download date
-                if(symbolsRegistry.containsKey(symbol)){
-                    lastDownloadDate = symbolsRegistry.get(symbol);
-                }
-                else{
-                    //set last download default value to minus 10 days
-                    lastDownloadDate = today.minusDays(10);
-                }
-
-                while(lastDownloadDate.compareTo(prevDay) < 0){
-                    lastDownloadDate = lastDownloadDate.plusDays(1);
-                    LocalDate downloadDate = LocalDate.of(lastDownloadDate.getYear(), lastDownloadDate.getMonth(), lastDownloadDate.getDayOfMonth());
-                    DayOfWeek dayOfWeek = downloadDate.getDayOfWeek();
-                    if(dayOfWeek != DayOfWeek.SATURDAY && dayOfWeek != DayOfWeek.SUNDAY) {
-                        Runnable worker = new DownLoadTask(symbol, downloadDate);
-                        executor.execute(worker);
-                    }
-                }
+                executor.execute(new DownLoadTask(symbol));
             }
-            // This will make the executor accept no new threads
-            // and finish all existing threads in the queue
+
+            // This will make the executor accept no new threads and finish all existing threads in the queue
             executor.shutdown();
-            // Wait until all threads are finish
+
+            // Wait until all threads are finished
             executor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
-            logger.info("Finished all threads");
 
             //save symbol registry
             ConfigurationManager.getInstance().SaveSymbolRegistry();
