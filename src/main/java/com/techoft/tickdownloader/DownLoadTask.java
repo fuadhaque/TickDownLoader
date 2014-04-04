@@ -9,7 +9,6 @@ import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -49,14 +48,13 @@ public class DownLoadTask implements Runnable {
         try {
             while (lastDownloadDate.compareTo(yesterday) < 0) {
                 lastDownloadDate = lastDownloadDate.plusDays(1);
-                DayOfWeek dayOfWeek = lastDownloadDate.getDayOfWeek();
-                if (dayOfWeek != DayOfWeek.SATURDAY && dayOfWeek != DayOfWeek.SUNDAY) {
-                    // may throw exception
-                    downloadTicks(lastDownloadDate);
 
-                    // this would not execute in case of an exception
-                    ConfigurationManager.getInstance().UpdateSymbolRegistry(symbol, lastDownloadDate);
-                }
+                // may throw exception
+                downloadTicks(lastDownloadDate);
+
+                // this would not execute in case of an exception
+                ConfigurationManager.getInstance().UpdateSymbolRegistry(symbol, lastDownloadDate);
+
             }
         }catch(Exception e){
             logger.error(e);
