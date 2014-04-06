@@ -101,8 +101,8 @@ public class DownLoadTask implements Runnable {
             String sLine = sin.readLine();
 
             while((sLine = sin.readLine()) != null){
-                if(sLine.indexOf("!ENDMSG!", 0) > -1 || sLine.equals("E,!SYNTAX_ERROR!,") || sLine.indexOf("!NO_DATA!", 0) > -1){
-                    logger.info(sLine);
+                if(sLine.indexOf("!ENDMSG!", 0) > -1 || sLine.equals("E,!SYNTAX_ERROR!,") || sLine.equals("E,Invalid symbol.,") || sLine.indexOf("!NO_DATA!", 0) > -1){
+                    logger.info("[" + symbol + "]>>>" + sLine);
                     break;
                 }else{
                     tickWriter.write(String.format("%s%n", sLine));
