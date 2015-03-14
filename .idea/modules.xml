@@ -3,7 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/TickDownLoader.iml" filepath="$PROJECT_DIR$/TickDownLoader.iml" />
+      <module fileurl="file://$PROJECT_DIR$/tickdownloader.iml" filepath="$PROJECT_DIR$/tickdownloader.iml" />
     </modules>
   </component>
 </project>
-

@@ -21,7 +21,7 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class ConfigurationManager {
     //config file
-    private static final String configFileName = "config.xml";
+    private static final String configFileName = "config/config.xml";
 
     // symbol registry
     private static final String symbolRegistryFileName = "symbolRegistry.csv";

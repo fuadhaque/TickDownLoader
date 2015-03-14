@@ -8,5 +8,5 @@
     <!-- IQFeed Admin port number -->
     <IQFeedAdminPortNumber>9300</IQFeedAdminPortNumber>
     <!-- Insert single space between symbols -->
-    <Symbols>AAPL MSFT GOOG</Symbols>
+    <Symbols>@ES# @NQ#</Symbols>
 </Configuration>

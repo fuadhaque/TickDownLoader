@@ -37,8 +37,8 @@ public class DownLoadTask implements Runnable {
     }
 
     public void run(){
-        //set last download default value to minus 10 days
-        LocalDate lastDownloadDate = LocalDate.now().minusDays(10);
+        //set last download default value to minus 180 days
+        LocalDate lastDownloadDate = LocalDate.now().minusDays(180);
 
         //get last successful download date
         if(symbolsRegistry.containsKey(symbol)){

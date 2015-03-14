@@ -1,0 +1,52 @@
+/*
+ * Copyright 2014-2015 Algodefu
+ *
+ */
+
+apply plugin: 'java'
+apply plugin: 'idea'
+apply plugin: 'application'
+
+idea {
+    project {
+        jdkName = '1.8'
+        languageLevel = '1.8'
+    }
+}
+
+version = '1.0-SNAPSHOT'
+archivesBaseName = 'tickdownloader'
+mainClassName = "com.techoft.tickdownloader.Main"
+
+jar {
+    manifest {
+        attributes 'Implementation-Title': 'tickdownloader', 'Implementation-Version': 1.0
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'org.apache.logging.log4j:log4j-core:2.0-rc1'
+    compile 'org.apache.logging.log4j:log4j-api:2.0-rc1'
+}
+
+task terminalConfiguration {
+    def data = file("$buildDir/config")
+    outputs.dir data
+    doLast {
+        data.mkdir()
+        copy {
+            into data
+            from("config") {
+                include "*"
+            }
+        }
+    }
+}
+
+applicationDistribution.from(terminalConfiguration) {
+    into "config"
+}
