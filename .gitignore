@@ -3,5 +3,6 @@
 *.iml
 *.ipr
 *.iws
-build
-out
+build/
+.idea/
+out/
